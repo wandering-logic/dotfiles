@@ -4,7 +4,7 @@
 * It will be named "dotfiles".
 * `mv dotfiles .dotfile-repo`
 * symlink the `bin` and `emacs.d` dirs into homedir
-* hardlink the .files into homedir
+* symlink the .files into homedir
 
 
 Todo:
