@@ -1,5 +1,8 @@
 # dotfiles
 
+Mainly bash and emacs configs.  They are "notable" only in that I prefer to run
+emacs in a 16-color xterm, which probably won't appeal to a wide audience.
+
 * Git clone this to your homedir.
 * It will be named "dotfiles".
 * `mv dotfiles .dotfile-repo`
