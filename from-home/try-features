@@ -1,0 +1,11 @@
+#!/bin/bash
+# This script echoes colors and codes
+
+DISPSTRING="The quick brown fox jumps over the lazy dog."
+echo -e "\e[0mNormal:    ${DISPSTRING}\e[0m"
+echo -e "\e[1mBold:      ${DISPSTRING}\e[0m"
+echo -e "\e[2mFaint:     ${DISPSTRING}\e[0m"
+echo -e "\e[3mItalic:    ${DISPSTRING}\e[0m"
+echo -e "\e[7mReverse:   ${DISPSTRING}\e[0m"
+echo -e "\e[4mUnderline: ${DISPSTRING}\e[0m"
+echo -e "\e[9mStrikeThrough: ${DISPSTRING}\e[0m"
