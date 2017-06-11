@@ -105,32 +105,6 @@
 
 (global-set-key [?\M-\C-\;] 'write-big-comment-framework)
 
-;; Date: Wed, 7 Dec 1994 11:57:50 -0600
-;; From: blob@syl.dl.nec.com (David Blob)
-;; Subject: Self-extracting emacs elisp code
-;; 
-;; With all this talk about self extracting mail "viruses", a friend
-;; showed me that in emacs (which I use to read mail, along with vm)
-;; has the ability to self-extract elisp code. This feature seems to
-;; be turned on by default, and it not only applies to mail read with
-;; emacs, but rather every file visited (when the feature is on, of
-;; course).
-;; 
-;; The way it works is by having a line which reads "Local Variables:"
-;; followed by the lisp variables you would like to set...well, it may
-;; seem petty, but you can execute programs, make connections and much
-;; more through cleverly written elisp code contained within.
-;; 
-;; It's simple to turn off, at any rate...
-;; 
-;; (setq enable-local-variables  f) ;; turns off feature  (in emacs 19)
-;; (setq enable-local-variables  1) ;; makes it ask first (in emacs 19)
-;; (setq inhibit-local-variables t) ;; turns off feature  (in emacs 18)
-;; 
-;; Anyhow, I think the risks here speak for themselves...
-;;
-(setq enable-local-variables '())
-
 ;; lose the useless decorations
 (menu-bar-mode -1)
 (cond
@@ -216,4 +190,18 @@
   (xclip-mode 1)
   )
 
-;(load-theme 'wombat)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Color theme
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(font-lock-comment-face ((t (:foreground "magenta" :slant italic)))))

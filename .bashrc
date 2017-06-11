@@ -6,12 +6,11 @@ source /etc/bashrc
 # If not running interactively, don't do anything
 [[ "$-" != *i* ]] && return
 
-# export http_proxy=http://proxy-us.intel.com:911
-# export https_proxy=http://proxy-us.intel.com:911
+# export http_proxy=http://proxy.foo.com:port
 
-# disable the following: DISPLAY should be set in any circumstance where it is
+# Disable the following: DISPLAY should be set in any circumstance where it is
 # useful.  If it is not set it is because user doesn't want to use it.
-# if DISPLAY is not set, but we can find an X server, use it
+# If DISPLAY is not set, but we can find an X server, use it
 #if [[ -z "${DISPLAY}" ]] && xset q -display localhost:0.0 &>/dev/null; then
 #  export DISPLAY=localhost:0.0
 #fi
