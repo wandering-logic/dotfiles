@@ -1,3 +1,9 @@
 #
 
-ssh mfrank@sc-xterm-02 /home/mfrank/bin/good-xterm
+head -7 /etc/motd
+( grep "6\\.[[:digit:]] (K)" /etc/motd \
+    && \
+    echo '-----------     90.0    0.00   0.00   0.00    0.00    0.00' ) | \
+    sort --numeric-sort --reverse --ignore-leading-blanks --key=2,2     | \
+    sed -e '/^---/q'                                                    | \
+    sort --stable --reverse --key=6.4,6.4
