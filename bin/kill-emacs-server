@@ -1,0 +1,5 @@
+#/usr/bin/bash
+
+echo 'prompting for unsaved files in all clients'
+emacsclient -e '(server-shutdown)'
+echo 'done'

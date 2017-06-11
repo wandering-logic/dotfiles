@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# tell p4 to put unchanged files back into unedit mode
+if [[ $# -eq 0 ]]; then
+    myargs=...
+else
+    myargs=$@
+fi
+
+p4 revert -a $myargs
