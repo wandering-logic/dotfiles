@@ -1,0 +1,1 @@
+nvidia-smi --id=1 --persistence-mode=0

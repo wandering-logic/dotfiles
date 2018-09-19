@@ -1,0 +1,2 @@
+nvidia-smi --id=1 --persistence-mode=1
+nvidia-smi --id=1 --lock-gpu-clocks=1372,1372

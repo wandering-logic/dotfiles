@@ -44,6 +44,11 @@
 
 (global-set-key "\C-x4" `perforce-checkout)
 
+; make ediff not suck
+(setq ediff-split-window-function (if (> (frame-width) 80)
+				      'split-window-horizontally
+				    'split-window-vertically))
+
 
 ;(load-library "mycompile")		; directory aware compile function
 ;(global-set-key "\C-c\C-e" 'set-default-compilation-directory)

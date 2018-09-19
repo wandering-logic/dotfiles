@@ -1,0 +1,43 @@
+#!/bin/bash
+
+usageMsg() {
+    echo "usage: $0 [-h|-?] [sw|hw] <string>"
+    exit
+}
+# default to sw server
+P4_SERVER=sw
+
+while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+	-h|"-?"|--help|-help)
+	    usageMsg
+	    ;;
+	sw)
+	    P4_SERVER=sw
+	    ;;
+	hw)
+	    P4_SERVER=hw
+	    ;;
+	*)
+	    UNIQUESTR=${key}
+	    ;;
+    esac
+    shift
+done
+
+# make sure the user specified a client name
+[[ -z "${UNIQUESTR}" ]] && usageMsg
+
+DATE_STRING=$(date +"%y%m")
+P4CLIENT=${USER}-${P4_SERVER}${DATE_STRING}${UNIQUESTR}
+
+echo creating client ${P4CLIENT}
+
+[[ -f ${P4CLIENT}/.p4config ]] && echo "Client already exists" && exit
+
+mkdir -p ${P4CLIENT}
+
+echo P4PORT=$(echo ${P4_SERVER} | sed -e "s/sw/p4proxy-ilc:2006/" -e "s/hw/p4proxy-ilc:2001/") > ${P4CLIENT}/.p4config
+echo P4CLIENT=${P4CLIENT} >> ${P4CLIENT}/.p4config
+echo P4IGNORE=${HOME}/.p4ignore >> ${P4CLIENT}/.p4config

@@ -28,7 +28,7 @@ else
     FILELIST=$@
 fi
 
-# echo LINES is \\$LINES\\ FILES is \\$FILELIST\\
+#echo LINES is \\$LINES\\ FILES is \\$FILELIST\\
 p4 changes $LINES $FILELIST | cut -f2 -d' ' | sort -un -k1,1 | xargs p4 describe -s | sed -n '/^Change/,/^Affected files/p' | grep -v "^Affected files"
 
 #p4 annotate -cq $myargs | sort -un -k1,1 | cut -f1 -d: | tail | xargs p4 describe -s | sed -n '/^Change/,/^Affected files/p' | grep -v "^Affected files"

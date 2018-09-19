@@ -21,9 +21,7 @@ source /etc/bashrc
 # standard options
 #export EDITOR="emacs -nw"
 export EDITOR=emacs
-
-export CONV_SASS_WITH_CASK=1
-
+export P4CONFIG=.p4config
 # Shell Options
 #
 # See man bash for more options...
@@ -87,7 +85,7 @@ if [[ \@${TERM} == \@xterm* ]] ; then
 
   # PROMPT_COMMAND gets executed between each prompt.  This is the
   # escape sequence to put the cwd in the window title:
-  export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
+  export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 
   # this sets the prompt to something cheerful:
   PS1='[\[\e[32m\]\h \[\e[33m\]\W\[\e[0m\]]\$ '
