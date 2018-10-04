@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# some other options I've used in the past:
+
+# watch --interval=1 nvidia-smi
+# nvidia-smi --loop=1
+
 if [[ $# -ne 1 ]]; then
    echo need to specify device id number
    exit 1
