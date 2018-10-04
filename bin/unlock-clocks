@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+   echo need to specify device id number
+   exit 1
+fi
+
+nvidia-smi --id=${1} --reset-gpu-clocks

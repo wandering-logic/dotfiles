@@ -21,9 +21,7 @@ source /etc/bashrc
 # standard options
 #export EDITOR="emacs -nw"
 export EDITOR=emacs
-
-export CONV_SASS_WITH_CASK=1
-
+export P4CONFIG=.p4config
 # Shell Options
 #
 # See man bash for more options...
@@ -87,7 +85,7 @@ if [[ \@${TERM} == \@xterm* ]] ; then
 
   # PROMPT_COMMAND gets executed between each prompt.  This is the
   # escape sequence to put the cwd in the window title:
-  export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
+  export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 
   # this sets the prompt to something cheerful:
   PS1='[\[\e[32m\]\h \[\e[33m\]\W\[\e[0m\]]\$ '
@@ -171,28 +169,37 @@ alias nl-to-null='tr \\n \\0'
 # fi
 #
 
-path-prepend () {
-  if [ -n "${1}" ]; then
-    # the ${parameter:+word} syntax substitutes <word> conditional on
-    # parameter (<word> here is ":$PATH")
-    export PATH=${1}${PATH:+:$PATH}
-  fi
-}
-export -f path-prepend
+path-add () {
+    local whichpath=PATH
+    local prepend=""
+    local newplace=$(pwd)
 
-path-append () {
-  if [ -n "${1}" ]; then
-    export PATH=${PATH:+$PATH:}${1}
-  fi
-}
-export -f path-append
+    for i in "$@"; do
+	case $i in
+	    -p|--pre*)
+		prepend="yes"
+		;;
+	    -l|--lib*)
+		whichpath=LD_LIBRARY_PATH
+		;;
+	    *)
+		newplace=$(realpath "$i")
+		;;
+	esac
+    done
 
-libpath-append () {
-  if [ -n "${1}" ]; then
-    export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:+$LD_LIBRARY_PATH:}${1}
-  fi
+    if [ -n "${prepend}" ]; then
+	# the ${parameter:+word} syntax substitutes <word> conditional on
+	# parameter (<word> here is ":${!whichpath}") the ${!param} is an
+	# indirect variabl.  So if whichpath=PATH then we get the contents of
+	# PATH, if it is LD_LIBRARY_PATH we get the contents of that.
+	export ${whichpath}=${newplace}${!whichpath:+:${!whichpath}}
+    else
+	export ${whichpath}=${!whichpath:+${!whichpath}:}${newplace}
+    fi
 }
-export -f libpath-append
+
+export -f path-add
 
 # OSTYPE is a "bashism", use "uname -s" outside .bashrc
 # https://stackoverflow.com/questions/3466166/how-to-check-if-running-in-cygwin-mac-or-linux
