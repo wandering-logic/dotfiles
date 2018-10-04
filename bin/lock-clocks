@@ -1,2 +1,8 @@
-nvidia-smi --id=1 --persistence-mode=1
-nvidia-smi --id=1 --lock-gpu-clocks=1372,1372
+#!/bin/bash
+
+if [[ $# -ne 1 ]]; then
+   echo need to specify device id number
+   exit 1
+fi
+
+nvidia-smi --id=${1} --persistence-mode=1 && nvidia-smi --id=${1} --lock-gpu-clocks=1372,1372
