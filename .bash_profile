@@ -7,9 +7,9 @@ if [ -f "${HOME}/.bashrc" ] ; then
 fi
 
 # Set PATH so it includes user's private bin if it exists
-# path-prepend defined in .bashrc
+# path-add defined in .bashrc
 if [ -d "${HOME}/bin" ] ; then
-    path-prepend "${HOME}/bin"
+    path-add -p "${HOME}/bin"
 fi
 
 # Set MANPATH so it includes users' private man if it exists

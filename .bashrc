@@ -1,7 +1,8 @@
 # base-files version 4.0-4
 # ~/.bashrc: executed by bash(1) for interactive shells.
 
-source /etc/bashrc
+# I guess Centos expects this, while Ubuntu doesn't
+[[ -f /etc/bashrc ]] && source /etc/bashrc
 
 # If not running interactively, don't do anything
 [[ "$-" != *i* ]] && return
