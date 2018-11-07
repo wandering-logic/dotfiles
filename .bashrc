@@ -16,12 +16,9 @@
 #  export DISPLAY=localhost:0.0
 #fi
 
-# ON THIS SYSTEM I'VE ONLY INSTALLED EMACS-NOX AND EMACS IS MAPPED TO
-# THE LATEST VERSION OF EMACS-NOX
-
 # standard options
-#export EDITOR="emacs -nw"
-export EDITOR=emacs
+export EDITOR="emacs -nw"
+#export EDITOR=emacs
 export P4CONFIG=.p4config
 # Shell Options
 #
@@ -148,7 +145,7 @@ fi
 
 alias nl-to-null='tr \\n \\0'
 
-#alias emacs='/usr/bin/emacs -nw'
+alias emacs='/usr/bin/emacs -nw'
 #alias emacs-x='/usr/bin/emacs'
 
 # Umask
@@ -229,11 +226,13 @@ mfrank_xyank() {
 }
 
 # only works if there is an xserver to handle the clipboard:
-if [[ -n "${DISPLAY}" ]]; then
-    bind -m emacs -x '"\C-u": mfrank_xdiscard'
-    bind -m emacs -x '"\C-k": mfrank_xkill'
-    bind -m emacs -x '"\C-y": mfrank_xyank'
-fi
+# too slow:
+#if [[ -n "${DISPLAY}" ]]; then
+# too slow and no xclip
+#    bind -m emacs -x '"\C-u": mfrank_xdiscard'
+#    bind -m emacs -x '"\C-k": mfrank_xkill'
+#    bind -m emacs -x '"\C-y": mfrank_xyank'
+#fi
 
 # Some example functions:
 #

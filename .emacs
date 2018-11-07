@@ -120,9 +120,9 @@
   ))
 
 ;; .sass mode
-(load "sass-mode")
+;; (load "sass-mode")
 ;; bison mode (also good for Flex/Lex/Yacc)
-(load "bison-mode")
+;; (load "bison-mode")
 
 ;; handle camelCase
 (add-hook 'prog-mode-hook 'subword-mode)
@@ -190,9 +190,9 @@
   (global-set-key [mouse-5] (lambda()
 			      (interactive)
 			      (scroll-up 1)))
-  (add-to-list 'load-path "~/.emacs.d/elpa/xclip-1.3/")
-  (require 'xclip)
-  (xclip-mode 1)
+;  (add-to-list 'load-path "~/.emacs.d/elpa/xclip-1.3/")
+;  (require 'xclip)
+;  (xclip-mode 1)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
