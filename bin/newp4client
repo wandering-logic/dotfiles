@@ -30,7 +30,7 @@ done
 [[ -z "${UNIQUESTR}" ]] && usageMsg
 
 DATE_STRING=$(date +"%y%m")
-P4CLIENT=${USER}-${P4_SERVER}${DATE_STRING}${UNIQUESTR}
+P4CLIENT=${P4_SERVER}${DATE_STRING}${UNIQUESTR}-${USER}
 
 echo creating client ${P4CLIENT}
 
