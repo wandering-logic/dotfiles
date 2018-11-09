@@ -63,9 +63,9 @@ shopt -s checkwinsize
 # History Options
 HISTSIZE=2000
 HISTFILESIZE=2000
-HISTTIMEFORMAT="%F %T "
-# options for HISTCONTROL are ignorespace, or ignoredups, or ignorespace:ignoredups == ignoreboth
-HISTCONTROL=ignoreboth
+#HISTTIMEFORMAT="%F %T "
+# options for HISTCONTROL are erasedups:ignorespace:ignoredups, or ignoreboth=ignorespace:ignoredups
+HISTCONTROL=ignoreboth:erasedups
 # Ignore some controlling instructions
 # HISTIGNORE is a colon-delimited list of patterns which should be excluded.
 # The '&' is a special pattern which suppresses duplicate entries.
