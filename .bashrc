@@ -170,18 +170,42 @@ alias emacs='/usr/bin/emacs -nw'
 path-add () {
     local whichpath=PATH
     local prepend=""
-    local newplace=$(pwd)
+    local newplace=""
+    local usage_string="usage: ${0} [--help] [--prepend] [--libpath] [path (defaults to cwd)]"
 
-    for i in "$@"; do
-	case $i in
+    getopt --test
+    [[ $? -eq 4 ]] || { echo "getopt program on this machine is too old" >&2 ; return 4; }
+    local temp_args=$(getopt --name ${0} --options hpl --longoptions help,prepend,libpath -- "$@")
+    [[ $? -eq 0 ]] || { echo ${USAGE_STRING} >&2 ; return 1; }
+
+    eval set -- "${temp_args}"
+
+    while true; do
+	case $1 in
+	    -h|--help)
+		echo ${usage_string}
+		return 0
+		;;
 	    -p|--pre*)
 		prepend="yes"
+		shift
 		;;
 	    -l|--lib*)
 		whichpath=LD_LIBRARY_PATH
+		shift
+		;;
+	    --)			# end of options
+		shift
+		while [[ ${1} ]]; do
+		    newplace=${newplace:+${newplace}:}$(realpath "${1}")
+		    shift
+		done
+		# newplace defaults to pwd if user gives no args
+		[[ ${newplace} ]] || newplace=$(pwd)
+		break
 		;;
 	    *)
-		newplace=$(realpath "$i")
+		echo "Internal error: unrecognized option: ${1}" >&2
 		;;
 	esac
     done
