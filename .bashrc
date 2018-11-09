@@ -61,20 +61,19 @@ shopt -s checkwinsize
 # [[ -f /etc/bash_completion ]] && . /etc/bash_completion
 
 # History Options
-HISTSIZE=1000
+HISTSIZE=2000
 HISTFILESIZE=2000
-#
-# Don't put duplicate lines in the history.
-# export HISTCONTROL=$HISTCONTROL${HISTCONTROL+,}ignoredups
-#
+HISTTIMEFORMAT="%F %T "
+# options for HISTCONTROL are ignorespace, or ignoredups, or ignorespace:ignoredups == ignoreboth
+HISTCONTROL=ignoreboth
 # Ignore some controlling instructions
 # HISTIGNORE is a colon-delimited list of patterns which should be excluded.
 # The '&' is a special pattern which suppresses duplicate entries.
-# export HISTIGNORE=$'[ \t]*:&:[fb]g:exit'
-# export HISTIGNORE=$'[ \t]*:&:[fb]g:exit:ls' # Ignore the ls command as well
-#
+# HISTIGNORE=$'[ \t]*:&:[fb]g:exit'
+# HISTIGNORE=$'[ \t]*:&:[fb]g:exit:ls' # Ignore the ls command as well
+HISTIGNORE='?:??:???:dirs:pushd*:popd*:cd ..*:history*:exit*:ls -l:bc -l'
 # Whenever displaying the prompt, write the previous line to disk
-# export PROMPT_COMMAND="history -a"
+PROMPT_COMMAND="history -a"
 
 if [[ \@${TERM} == \@xterm* ]] ; then
 
@@ -83,14 +82,12 @@ if [[ \@${TERM} == \@xterm* ]] ; then
 
   # PROMPT_COMMAND gets executed between each prompt.  This is the
   # escape sequence to put the cwd in the window title:
-  export PROMPT_COMMAND='echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
+  PROMPT_COMMAND=${PROMPT_COMMAND:+${PROMPT_COMMAND};}'echo -ne "\033]0;${HOSTNAME}:${PWD}\007"'
 
   # this sets the prompt to something cheerful:
   PS1='[\[\e[32m\]\h \[\e[33m\]\W\[\e[0m\]]\$ '
 else
   # no color!
-  export PROMPT_COMMAND=""
-  unset PROMPT_COMMAND
   PS1='[\h \W]\$ '
 fi
 
