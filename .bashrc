@@ -171,12 +171,13 @@ path-add () {
     local whichpath=PATH
     local prepend=""
     local newplace=""
-    local usage_string="usage: ${0} [--help] [--prepend] [--libpath] [path (defaults to cwd)]"
+    local usage_string="usage: ${FUNCNAME[0]} [--help] [--prepend] [--libpath] [path (defaults to cwd)]"
+    local temp_args=""
 
     getopt --test
     [[ $? -eq 4 ]] || { echo "getopt program on this machine is too old" >&2 ; return 4; }
-    local temp_args=$(getopt --name ${0} --options hpl --longoptions help,prepend,libpath -- "$@")
-    [[ $? -eq 0 ]] || { echo ${USAGE_STRING} >&2 ; return 1; }
+    temp_args=$(getopt --name ${FUNCNAME[0]} --options hpl --longoptions help,prepend,libpath -- "$@")
+    [[ $? -eq 0 ]] || { echo ${usage_string} >&2 ; return 1; }
 
     eval set -- "${temp_args}"
 
