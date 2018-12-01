@@ -108,6 +108,8 @@ class KernelTable:
     def __init__(self, sqlite_filename):
         self.filename = sqlite_filename
         self.markers = MarkerTable(self.filename)
+        self.start_time = self.markers.first_time
+        self.end_time = self.markers.last_time
         # We join the concurrent_kernel table with the runtime api call table
         # on correlationId.  We only select records between the start and end
         # of the NVTX __start_profile and __stop_profile
@@ -169,6 +171,138 @@ class KernelTable:
             print(kernel_call['kernelName'])
 
 
+###############################################################################
+#
+# The list of memcpys
+#
+###############################################################################
+class MemcpyTable:
+    # enums from cupti_activity.h
+    memory_kinds = ['UNKNOWN', 'PAGEABLE', 'PINNED', 'DEVICE',
+                    'ARRAY', 'MANAGED', 'DEVICE_STATIC', 'MANAGED_STATIC']
+    copy_kinds = ['UNKNOWN', 'HTOD', 'DTOH', 'HTOA', 'ATOH', 'ATOA', 'ATOD',
+                  'DTOA', 'DTOD', 'HTOH', 'PTOP']
+                                                                                                          
+    def __init__(self, sqlite_filename, start_time, end_time):
+        self.start_time = start_time
+        self.end_time = end_time
+        # We join the memcpy table with the runtime api call table
+        # on correlationId.  We only select records between the start and end
+        # of the NVTX __start_profile and __stop_profile
+        self.list = do_query(sqlite_filename,
+                    '''
+                    select
+                        memcpy._id_,
+                        memcpy.copyKind,
+                        memcpy.srcKind,
+                        memcpy.dstKind,
+                        memcpy.flags,
+                        memcpy.bytes,
+                        memcpy.start as cpyStart,
+                        memcpy.end as cpyEnd,
+                        memcpy.correlationId,
+                        api_calls.start as apiStart,
+                        api_calls.end as apiEnd,
+                        api_calls.processId,
+                        api_calls.threadId
+                    from cupti_activity_kind_memcpy as memcpy
+                    inner join cupti_activity_kind_runtime as api_calls
+                        on memcpy.correlationId = api_calls.correlationId
+                    where apiStart > {start_val} and apiStart < {end_val}
+                    order by apiStart'''.format(
+                        start_val = start_time,
+                        end_val   = end_time))
+
+    ###########################################################################
+    # here we're doing the work that couldn't be trivially done using a simple sql join
+    ###########################################################################
+    def process_list(self):
+        for memcpy in self.list:
+            call_time = memcpy['apiStart']
+            rel_start_time = (memcpy['cpyStart']-self.start_time)
+            execution_time = (memcpy['cpyEnd'] -
+                              memcpy['cpyStart'])
+            thread_id = memcpy['threadId']
+            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( MemcpyTable.copy_kinds[memcpy['copyKind']],
+                                                               MemcpyTable.memory_kinds[memcpy['srcKind']],
+                                                               MemcpyTable.memory_kinds[memcpy['dstKind']],
+                                                               memcpy['flags'],
+                                                               '',
+                                                               '',
+                                                               hex(thread_id),
+                                                               rel_start_time,
+                                                               execution_time),
+                  end='\t')
+            # print the markers from just before the kernel's api timestamp
+            print(memcpy['bytes'], end='\t')
+            print('memcpy')
+
+###############################################################################
+#
+# The list of memsets
+#
+###############################################################################
+class MemsetTable:
+    # enums from cupti_activity.h
+    memory_kinds = ['UNKNOWN', 'PAGEABLE', 'PINNED', 'DEVICE',
+                    'ARRAY', 'MANAGED', 'DEVICE_STATIC', 'MANAGED_STATIC']
+    copy_kinds = ['UNKNOWN', 'HTOD', 'DTOH', 'HTOA', 'ATOH', 'ATOA', 'ATOD',
+                  'DTOA', 'DTOD', 'HTOH', 'PTOP']
+                                                                                                          
+    def __init__(self, sqlite_filename, start_time, end_time):
+        self.start_time = start_time
+        self.end_time = end_time
+        # We join the memset table with the runtime api call table
+        # on correlationId.  We only select records between the start and end
+        # of the NVTX __start_profile and __stop_profile
+        self.list = do_query(sqlite_filename,
+                    '''
+                    select
+                        memset._id_,
+                        memset.value,
+                        memset.memoryKind as dstKind,
+                        memset.flags,
+                        memset.bytes,
+                        memset.start as dvcStart,
+                        memset.end as dvcEnd,
+                        memset.correlationId,
+                        api_calls.start as apiStart,
+                        api_calls.end as apiEnd,
+                        api_calls.processId,
+                        api_calls.threadId
+                    from cupti_activity_kind_memset as memset
+                    inner join cupti_activity_kind_runtime as api_calls
+                        on memset.correlationId = api_calls.correlationId
+                    where apiStart > {start_val} and apiStart < {end_val}
+                    order by apiStart'''.format(
+                        start_val = start_time,
+                        end_val   = end_time))
+
+    ###########################################################################
+    # here we're doing the work that couldn't be trivially done using a simple sql join
+    ###########################################################################
+    def process_list(self):
+        for memset in self.list:
+            call_time = memset['apiStart']
+            rel_start_time = (memset['dvcStart']-self.start_time)
+            execution_time = (memset['dvcEnd'] -
+                              memset['dvcStart'])
+            thread_id = memset['threadId']
+            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( '',
+                                                               memset['value'],
+                                                               MemsetTable.memory_kinds[memset['dstKind']],
+                                                               memset['flags'],
+                                                               '',
+                                                               '',
+                                                               hex(thread_id),
+                                                               rel_start_time,
+                                                               execution_time),
+                  end='\t')
+            # print the markers from just before the kernel's api timestamp
+            print(memset['bytes'], end='\t')
+            print('memset')
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process the output of nvprof --profile-api-trace all.')
     parser.add_argument('input_file', nargs=1,
@@ -178,3 +312,7 @@ if __name__ == "__main__":
 
     kernels = KernelTable(args.input_file[0])
     kernels.process_list()
+    memcpys = MemcpyTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    memcpys.process_list()
+    memsets = MemsetTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    memsets.process_list()
