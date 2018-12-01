@@ -136,15 +136,17 @@ class KernelTable:
     def process_list(self):
         for kernel_call in self.list:
             call_time = kernel_call['apiStart']
+            rel_start_time = (kernel_call['kernelStart']-self.markers.first_time)
             execution_time = (kernel_call['kernelEnd'] -
                               kernel_call['kernelStart'])
-            print("({},{},{})\t({},{},{})\t{}".format( kernel_call['gridX'],
-                                                       kernel_call['gridY'],
-                                                       kernel_call['gridZ'],
-                                                       kernel_call['blockX'],
-                                                       kernel_call['blockY'],
-                                                       kernel_call['blockZ'],
-                                                       execution_time),
+            print("({},{},{})\t({},{},{})\t{}\t{}".format( kernel_call['gridX'],
+                                                           kernel_call['gridY'],
+                                                           kernel_call['gridZ'],
+                                                           kernel_call['blockX'],
+                                                           kernel_call['blockY'],
+                                                           kernel_call['blockZ'],
+                                                           rel_start_time,
+                                                           execution_time),
                   end='\t')
             # print the markers from just before the kernel's api timestamp
             print(self.markers.update_time(call_time), end='\t')
