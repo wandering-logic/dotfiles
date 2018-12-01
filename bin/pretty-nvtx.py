@@ -26,6 +26,7 @@ class MarkerTable:
     def __init__(self, sqlite_filename):
         self.filename = sqlite_filename
         self.names = []         # map marker.id => marker string value
+        self.tids = []          # map marker.id => marker thread id
         self.stack = []
         self.next_idx = int(0)
         self.list = do_query(self.filename,
@@ -34,7 +35,8 @@ class MarkerTable:
                                  marker.timestamp,
                                  marker.flags,    
                                  marker.id,
-                                 StringTable.value
+                                 StringTable.value,
+                                 marker.objectId
                              from cupti_activity_kind_marker as marker
                              inner join StringTable
                                  on marker.name = StringTable._id_
@@ -49,22 +51,28 @@ class MarkerTable:
     ###########################################################################
     # pretty print the currently active nvtx ranges
     ###########################################################################
-    def cvt_stack_to_string(self):
+    def cvt_stack_to_string(self, tid_printing):
         output = ''
         for m in self.stack:
-            output = output + self.names[m]+'('+str(m)+'):'
+            if self.tids[m] == tid_printing: # only elements for this thread
+                output = output + self.names[m]+'('+str(m)+'):'
         return output
 
     ###########################################################################
     # Iterate through marker events for ranges until we're at the state
     # corresponding to input 'tm'
     ###########################################################################
-    def update_time(self, tm):
+    def update_time(self, tm, tid_printing):
         while self.list[self.next_idx]['timestamp'] <= tm:
             timestamp = self.list[self.next_idx]['timestamp']
             flags     = self.list[self.next_idx]['flags']
             rangeid   = self.list[self.next_idx]['id']
             nm        = self.list[self.next_idx]['value']
+            # as per cupti_activity.h: CUpti_ActivityObjectKindId is a 12 byte
+            # union, where the threadId (in this case) sits in the middle 4
+            # bytes.
+            threadid  = int.from_bytes(self.list[self.next_idx]['objectId'][4:8],
+                                       byteorder='little', signed=True)
 
             if flags == 2: # a range starts
                 # Range start command gives the name of the range. We want
@@ -72,7 +80,10 @@ class MarkerTable:
                 # Python arrays are dense and start at 0
                 while rangeid >= len(self.names):
                     self.names.append(None)
+                    self.tids.append(None)
                 self.names[rangeid] = nm
+                self.tids[rangeid] = threadid
+                
                 self.stack.append(rangeid)
 
             elif flags == 4: # a range ends
@@ -80,9 +91,12 @@ class MarkerTable:
                     self.stack.pop(self.stack.index(rangeid))
                 else:
                     print("error: popping non-existing marker????\n")
+                if self.tids[rangeid] != threadid:
+                    print("error: popping marker from different thread than pushed????\n")
+                    
             self.next_idx = self.next_idx+1
 
-        return self.cvt_stack_to_string()
+        return self.cvt_stack_to_string(tid_printing)
 
 
 ###############################################################################
@@ -139,17 +153,19 @@ class KernelTable:
             rel_start_time = (kernel_call['kernelStart']-self.markers.first_time)
             execution_time = (kernel_call['kernelEnd'] -
                               kernel_call['kernelStart'])
-            print("({},{},{})\t({},{},{})\t{}\t{}".format( kernel_call['gridX'],
-                                                           kernel_call['gridY'],
-                                                           kernel_call['gridZ'],
-                                                           kernel_call['blockX'],
-                                                           kernel_call['blockY'],
-                                                           kernel_call['blockZ'],
-                                                           rel_start_time,
-                                                           execution_time),
+            thread_id = kernel_call['threadId']
+            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( kernel_call['gridX'],
+                                                               kernel_call['gridY'],
+                                                               kernel_call['gridZ'],
+                                                               kernel_call['blockX'],
+                                                               kernel_call['blockY'],
+                                                               kernel_call['blockZ'],
+                                                               hex(thread_id),
+                                                               rel_start_time,
+                                                               execution_time),
                   end='\t')
             # print the markers from just before the kernel's api timestamp
-            print(self.markers.update_time(call_time), end='\t')
+            print(self.markers.update_time(call_time, thread_id), end='\t')
             print(kernel_call['kernelName'])
 
 
