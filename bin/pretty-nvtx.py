@@ -302,6 +302,66 @@ class MemsetTable:
             print(memset['bytes'], end='\t')
             print('memset')
 
+###############################################################################
+#
+# The list of synchronizations
+#
+###############################################################################
+class SyncTable:
+                                                                                                          
+    # enums from cupti_activity.h
+    sync_kinds = ['UNKNOWN', 'EVENT_SYNC', 'STREAM_WAIT_EVENT',
+                  'STREAM_SYNC', 'CONTEXT_SYNC']
+
+    def __init__(self, sqlite_filename, start_time, end_time):
+        self.start_time = start_time
+        self.end_time = end_time
+        # We join the sync table with the runtime api call table
+        # on correlationId.  We only select records between the start and end
+        # of the NVTX __start_profile and __stop_profile
+        self.list = do_query(sqlite_filename,
+                    '''
+                    select
+                        sync._id_,
+                        sync.type,
+                        sync.start as dvcStart,
+                        sync.end as dvcEnd,
+                        sync.correlationId,
+                        api_calls.start as apiStart,
+                        api_calls.end as apiEnd,
+                        api_calls.processId,
+                        api_calls.threadId
+                    from cupti_activity_kind_synchronization as sync
+                    inner join cupti_activity_kind_runtime as api_calls
+                        on sync.correlationId = api_calls.correlationId
+                    where apiStart > {start_val} and apiStart < {end_val}
+                    order by apiStart'''.format(
+                        start_val = start_time,
+                        end_val   = end_time))
+
+    ###########################################################################
+    # here we're doing the work that couldn't be trivially done using a simple sql join
+    ###########################################################################
+    def process_list(self):
+        for sync in self.list:
+            call_time = sync['apiStart']
+            rel_start_time = (sync['dvcStart']-self.start_time)
+            execution_time = (sync['dvcEnd'] -
+                              sync['dvcStart'])
+            thread_id = sync['threadId']
+            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( '',
+                                                               '',
+                                                               SyncTable.sync_kinds[sync['type']],
+                                                               '',
+                                                               '',
+                                                               '',
+                                                               hex(thread_id),
+                                                               rel_start_time,
+                                                               execution_time),
+                  end='\t')
+            # print the markers from just before the kernel's api timestamp
+            print(sync['apiEnd']-call_time, end='\t')
+            print('sync')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process the output of nvprof --profile-api-trace all.')
@@ -316,3 +376,5 @@ if __name__ == "__main__":
     memcpys.process_list()
     memsets = MemsetTable(args.input_file[0], kernels.start_time, kernels.end_time)
     memsets.process_list()
+    syncs = SyncTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    syncs.process_list()
