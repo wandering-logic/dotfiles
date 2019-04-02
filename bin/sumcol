@@ -13,5 +13,10 @@ BEGIN {
 }
 
 END {
-    print sum, count, sum/count
+    if (count > 0) {
+        print sum, count, sum/count
+    }
+    else {
+        print sum, count, "Inf"
+    }
 }

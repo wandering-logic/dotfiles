@@ -1,0 +1,84 @@
+#!/usr/bin/awk -f
+BEGIN {
+    OFS="\t"
+}
+
+BEGINFILE {
+    done = 0
+    last_eval_epoch = -1
+    run_start_time = -1
+    time_at_epoch_22 = -1
+    avg_epoch_time = -1
+    init_time = -1
+    delete eval_time
+    delete eval_acc
+}
+
+# make sure all the relevant lines have the fields in the positions we expect
+# them (sometimes the parallel output causes multiple (or none) "0: " at the
+# beginning instead of the single one expected)
+/:::MLP/ {
+    sub(/^.*:::MLP/, "0: :::MLP")
+}
+
+/:::MLP.*train_epoch: 22/ {
+    time_at_epoch_22=$4
+}
+
+/:::MLP.*train_epoch: 32/ {
+    avg_epoch_time = ($4-time_at_epoch_22)/10.0
+}
+
+/:::MLP.*eval_start/ {
+    eval_time[$7] = $4
+}
+
+/:::MLP.*eval_accuracy/ {
+    sub(/,/, "", $8)
+    sub(/}/, "", $10)
+    eval_acc[$8] = $10
+}
+
+/:::MLP.*eval_stop/ {
+    last_eval_epoch=$7
+    eval_time[$7] = $4 - eval_time[$7]
+}
+
+
+/:::MLP.*run_start/ {
+    run_start_time=$4
+}
+
+/:::MLP.*train_loop/ {
+    init_time=$4-run_start_time
+}
+
+function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc) {
+    printf("%s\t%.2f\t%s\t%.4f\t%.4f", fname, total_time, last_eval_epoch, init_time, avg_epoch_time)
+    for (i in eval_time) {
+        printf("\t%d\t%.4f\t%.4f", i, eval_time[i], eval_acc[i])
+    }
+    printf("\n")
+}
+
+/:::MLP.*run_stop.*true/ {
+    printall(FILENAME, $4-run_start_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfile
+}
+
+/:::MLP.*run_stop.*false/ {
+    printall(FILENAME, $4-run_start_time, "failed", init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfile
+}
+
+/^STOP/ {                       # we only get here if we didn't exit from a "run_stop" message
+    printall(FILENAME, -1, "failed", init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfile
+}
+
+ENDFILE {
+    if (!done) print FILENAME, "-", "notdone"
+}

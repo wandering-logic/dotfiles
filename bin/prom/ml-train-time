@@ -1,0 +1,1 @@
+awk -v OFS='\t' 'BEGIN{tot=0} /:::ML.*train_loop/{st=$4} /:::ML.*eval_stop/{st=$4} /:::ML.*eval_start/{tot+=($4-st)} END{print tot}' $@

@@ -12,6 +12,10 @@ if [ -d "${HOME}/bin" ] ; then
     path-add -p "${HOME}/bin"
 fi
 
+if [ -d /home/utils/bin ] ; then
+    path-add /home/utils/bin
+fi
+
 # Set MANPATH so it includes users' private man if it exists
 # if [ -d "${HOME}/man" ]; then
 #   MANPATH="${HOME}/man:${MANPATH}"
