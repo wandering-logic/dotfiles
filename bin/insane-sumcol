@@ -1,0 +1,33 @@
+#!/usr/bin/awk -f
+BEGIN {
+    OFS="\t"
+}
+
+{
+    # count how many times we've seen this row header
+    cnt[$1]=cnt[$1]+1;
+
+    # for each field after the row header
+    for (i=2; i<=NF; ++i) {
+        sum[$1][i]+=$i;
+        # max[$1][i] uninitialized means it is equivalent to 0.0
+        # so this doesn't work if the max number is negative
+        max[$1][i]=($i>max[$1][i]?$i:max[$1][i]);
+        # we can't depend on min[$1][i] being initialized to 0.0, because that
+        # will be less than the min of a column of positive numbers the
+        # min[$1][i]=="" test is not the "right" way to do it.  Should be (i in
+        # min[$1]) but then awk doesn't know that min[$1] is an array so that
+        # test is illegal here.
+        min[$1][i]=(min[$1][i]==""?$i:($i<min[$1][i]?$i:min[$1][i]))
+    }
+}
+
+END {
+    for (i in cnt) {
+        printf "%d", i;
+        for (j in sum[i]) {
+            printf "\t%f\t%f\t%f", sum[i][j]/cnt[i], min[i][j], max[i][j]
+        }
+        printf ORS
+    }
+}
