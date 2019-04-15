@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if [ -z "$1" ]
+then
+    echo "no arguments supplied to highlight"
+    exit 1
+fi
+
+grep -E --color=always "^|(${1})"
