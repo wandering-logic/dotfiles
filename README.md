@@ -7,8 +7,8 @@ emacs in a 16-color xterm, which probably won't appeal to a wide audience.
 * It will be named "dotfiles".
 * `mv dotfiles .dotfile-repo`
 * run ./dotfile-repo/create-links to:
-** symlink the `bin` and `emacs.d` dirs into homedir
-** symlink the .files into homedir
+  * symlink the `bin` and `emacs.d` dirs into homedir
+  * symlink the .files into homedir
 
 
 Todo:
