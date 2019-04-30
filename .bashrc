@@ -116,7 +116,7 @@ alias gpu-top='watch -n 0.5 nvidia-smi'
 # alias du='du -h'
 #
 # Misc :)
-# alias less='less -r'                          # raw control characters
+alias less='less -R'                          # raw control characters
 # alias whence='type -a'                        # where, of a sort
 # alias grep='grep --color'                     # show differences in colour
 # alias egrep='egrep --color=auto'              # show differences in colour
