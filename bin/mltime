@@ -7,11 +7,24 @@ BEGINFILE {
     done = 0
     last_eval_epoch = -1
     run_start_time = -1
+    time_at_epoch_12 = -1
     time_at_epoch_22 = -1
     avg_epoch_time = -1
     init_time = -1
+    container_name = ""
+    extra_args = ""
     delete eval_time
     delete eval_acc
+}
+
+/^LOCK is/ {
+    match($0, /^LOCK is .* cont is (.*)$/, arr)
+    container_name = arr[1]
+}
+
+/SSD_EXTRA_ARGS:/ {
+    match($0, /SSD_EXTRA_ARGS: (.*)$/, arr)
+    extra_args = arr[1]
 }
 
 # make sure all the relevant lines have the fields in the positions we expect
@@ -21,8 +34,13 @@ BEGINFILE {
     sub(/^.*:::MLP/, "0: :::MLP")
 }
 
+/:::MLP.*train_epoch: 12/ {
+    time_at_epoch_12=$4
+}
+
 /:::MLP.*train_epoch: 22/ {
     time_at_epoch_22=$4
+    avg_epoch_time = (time_at_epoch_22-time_at_epoch_12)/10.0
 }
 
 /:::MLP.*train_epoch: 32/ {
@@ -58,7 +76,7 @@ function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time,
     for (i in eval_time) {
         printf("\t%d\t%.4f\t%.4f", i, eval_time[i], eval_acc[i])
     }
-    printf("\n")
+    printf("\t%s\t%s\n", container_name, extra_args)
 }
 
 /:::MLP.*run_stop.*true/ {
@@ -74,11 +92,11 @@ function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time,
 }
 
 /^STOP/ {                       # we only get here if we didn't exit from a "run_stop" message
-    printall(FILENAME, -1, "failed", init_time, avg_epoch_time, eval_time, eval_acc)
+    printall(FILENAME, -1, "runfail", init_time, avg_epoch_time, eval_time, eval_acc)
     done=1
     nextfile
 }
 
 ENDFILE {
-    if (!done) print FILENAME, "-", "notdone"
+    if (!done) printall(FILENAME, -1, "notdone", init_time, avg_epoch_time, eval_time, eval_acc)
 }
