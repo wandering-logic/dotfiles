@@ -1,0 +1,8 @@
+#!/bin/bash
+cd ~
+mkdir .old-dotfiles
+for i in bin .emacs.d .bash_logout .bash_profile .bashrc .dircolors .emacs .inputrc .profile
+do
+    mv $i .old-dotfiles
+    ln -s .dotfile-repo/$i $i
+done
