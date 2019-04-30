@@ -107,9 +107,14 @@ class MarkerTable:
 class KernelTable:
     def __init__(self, sqlite_filename):
         self.filename = sqlite_filename
-        self.markers = MarkerTable(self.filename)
-        self.start_time = self.markers.first_time
-        self.end_time = self.markers.last_time
+        try:
+            self.markers = MarkerTable(self.filename)
+            self.start_time = self.markers.first_time
+            self.end_time = self.markers.last_time
+        except:
+            self.markers = None
+            self.start_time = 0
+            self.end_time = 9223372036854775806
         # We join the concurrent_kernel table with the runtime api call table
         # on correlationId.  We only select records between the start and end
         # of the NVTX __start_profile and __stop_profile
@@ -143,8 +148,8 @@ class KernelTable:
                         on kernels.name = StringTable._id_
                     where apiStart > {start_val} and apiStart < {end_val}
                     order by apiStart'''.format(
-                        start_val = self.markers.first_time,
-                        end_val   = self.markers.last_time))
+                        start_val = self.start_time,
+                        end_val   = self.end_time))
 
     ###########################################################################
     # here we're doing the work that couldn't be done using a simple sql join
@@ -152,7 +157,7 @@ class KernelTable:
     def process_list(self):
         for kernel_call in self.list:
             call_time = kernel_call['apiStart']
-            rel_start_time = (kernel_call['kernelStart']-self.markers.first_time)
+            rel_start_time = (kernel_call['kernelStart']-self.start_time)
             execution_time = (kernel_call['kernelEnd'] -
                               kernel_call['kernelStart'])
             thread_id = kernel_call['threadId']
@@ -167,7 +172,8 @@ class KernelTable:
                                                                execution_time),
                   end='\t')
             # print the markers from just before the kernel's api timestamp
-            print(self.markers.update_time(call_time, thread_id), end='\t')
+            if self.markers is not None:
+                print(self.markers.update_time(call_time, thread_id), end='\t')
             print(kernel_call['kernelName'])
 
 
