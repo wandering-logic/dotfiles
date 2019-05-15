@@ -1,0 +1,100 @@
+#!/usr/bin/awk -f
+BEGIN {
+    OFS="\t"
+}
+
+function get_mll_regex_field(line, regex) {
+    match(line, regex, result_array)
+    return result_array[1]
+}
+
+BEGINFILE {
+    done = 0
+    last_eval_epoch = -1
+    run_start_time = -1
+    avg_epoch_time = -1
+    init_time = -1
+    container_name = ""
+    extra_args = ""
+    delete eval_time
+    delete eval_acc
+    delete time_at_epoch
+}
+
+/^LOCK is/ {
+    container_name = get_mll_regex_field($0, "^LOCK is .* cont is (.*)$")
+}
+
+/SSD_EXTRA_ARGS:/ {
+    get_mll_regex_field($0, "SSD_EXTRA_ARGS: (.*)$")
+}
+
+# make sure all the relevant lines have the fields in the positions we expect
+# them (sometimes the parallel output causes multiple (or none) "0: " at the
+# beginning instead of the single one expected, just make it none)
+/:::MLL/ {
+    sub(/^.*:::MLL/, ":::MLL")
+}
+
+/:::MLL.*epoch_start:/ {
+    match($0, "epoch_num.: ([^,]+),", result_array)
+    epoch_num = result_array[1]
+    time_at_epoch[epoch_num] = $2
+    if (epoch_num == 1) {
+        init_time=$2-run_start_time
+    } else if (epoch_num > 2 && epoch_num <= 32) {
+        avg_epoch_time = (time_at_epoch[epoch_num] - time_at_epoch[2])/(epoch_num-2)
+    }
+}
+
+/:::MLL.*eval_start/ {
+    sub(",", "", $8)
+    eval_time[$8] = $2
+}
+
+/:::MLL.*eval_accuracy/ {
+    sub(",", "", $8)
+    sub(",", "", $5)
+    eval_acc[$8] = $5
+}
+
+/:::MLL.*eval_stop/ {
+    sub(",", "", $8)
+    last_eval_epoch=$8
+    eval_time[$8] = $2 - eval_time[$8]
+}
+
+
+/:::MLL.*run_start/ {
+    run_start_time=$2
+}
+
+function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc) {
+    printf("%s\t%.2f\t%s\t%.4f\t%.4f", fname, total_time, last_eval_epoch, init_time, avg_epoch_time)
+    for (i in eval_time) {
+        printf("\t%d\t%.4f\t%.4f", i, eval_time[i], eval_acc[i])
+    }
+    printf("\t%s\t%s\n", container_name, extra_args)
+}
+
+/:::MLL.*run_stop.*success/ {
+    printall(FILENAME, $2-run_start_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfileo
+}
+
+/:::MLL.*run_stop.*fail/ {
+    printall(FILENAME, $2-run_start_time, "failed", init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfile
+}
+
+/^STOP/ {                       # we only get here if we didn't exit from a "run_stop" message
+    printall(FILENAME, -1, "runfail", init_time, avg_epoch_time, eval_time, eval_acc)
+    done=1
+    nextfile
+}
+
+ENDFILE {
+    if (!done) printall(FILENAME, -1, "notdone", init_time, avg_epoch_time, eval_time, eval_acc)
+}

@@ -20,6 +20,10 @@
 export EDITOR="emacs -nw"
 #export EDITOR=emacs
 export P4CONFIG=.p4config
+# no-init keeps less from clearning screen on exit,
+# quit-if-one-screen exits less early if there's nothing to scroll
+# RAW-CONTROL-CHARS enables just Ansi color sequences
+export LESS="--no-init --quit-if-one-screen --RAW-CONTROL-CHARS"
 # Shell Options
 #
 # See man bash for more options...
@@ -116,7 +120,6 @@ alias gpu-top='watch -n 0.5 nvidia-smi'
 # alias du='du -h'
 #
 # Misc :)
-alias less='less -R'                          # raw control characters
 # alias whence='type -a'                        # where, of a sort
 # alias grep='grep --color'                     # show differences in colour
 # alias egrep='egrep --color=auto'              # show differences in colour
