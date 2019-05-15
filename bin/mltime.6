@@ -26,7 +26,7 @@ BEGINFILE {
 }
 
 /SSD_EXTRA_ARGS:/ {
-    get_mll_regex_field($0, "SSD_EXTRA_ARGS: (.*)$")
+    extra_args =  get_mll_regex_field($0, "SSD_EXTRA_ARGS: (.*)$")
 }
 
 # make sure all the relevant lines have the fields in the positions we expect
