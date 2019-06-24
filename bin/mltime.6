@@ -70,7 +70,7 @@ BEGINFILE {
 }
 
 function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc) {
-    printf("%s\t%.2f\t%s\t%.4f\t%.4f", fname, total_time, last_eval_epoch, init_time, avg_epoch_time)
+    printf("%s\t%.2f\t%s\t%.4f\t%.4f\t%.4f", fname, total_time, last_eval_epoch, init_time, time_at_epoch[2]-time_at_epoch[1], avg_epoch_time)
     for (i in eval_time) {
         printf("\t%d\t%.4f\t%.4f", i, eval_time[i], eval_acc[i])
     }
@@ -80,7 +80,7 @@ function printall(fname, total_time, last_eval_epoch, init_time, avg_epoch_time,
 /:::MLL.*run_stop.*success/ {
     printall(FILENAME, $2-run_start_time, last_eval_epoch, init_time, avg_epoch_time, eval_time, eval_acc)
     done=1
-    nextfileo
+    nextfile
 }
 
 /:::MLL.*run_stop.*fail/ {

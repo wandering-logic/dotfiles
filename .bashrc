@@ -148,16 +148,10 @@ alias nl-to-null='tr \\n \\0'
 alias emacs='/usr/bin/emacs -nw'
 #alias emacs-x='/usr/bin/emacs'
 
-# Umask
-#
-# /etc/profile sets 022, removing write perms to group + others.
-# Set a more restrictive umask: i.e. no exec perms for others:
-# umask 027
-# Paranoid: neither group nor others have any perms:
-# umask 077
-# When working with a group, on the other hand, it is sometimes useful
-# to allow group members to write shared files:
-# umask 002
+# umask is permission bits that should be forbidden
+# so 027 is "group can't write, others can't read/write/execute"
+# 022 is "neither group nor others can write"
+umask 022
 
 # Functions
 #
