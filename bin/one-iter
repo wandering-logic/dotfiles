@@ -1,0 +1,21 @@
+#!/usr/bin/awk -f
+BEGIN {
+    OFS="\t"
+    itercount = 0
+    iter_to_print = 5
+    print "ARGC is", ARGC
+    if (ARGC > 1) {
+        iter_to_print = ARGV[1]
+        ARGC = ARGC - 1
+    }
+}
+
+/first_layer_fwd_kernel/ {
+    itercount = itercount + 1
+}
+
+{
+    if (itercount == iter_to_print) {
+        print
+    }
+}

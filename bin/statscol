@@ -1,0 +1,33 @@
+#!/usr/bin/awk -f
+BEGIN {
+    OFS="\t"
+    sum=0
+    sumsqr = 0
+    count=0
+    max = -1
+    min = 9999999999
+}
+
+{
+    if ($1 != "-") {            # FIXME: should test for whether it's a valid number or not
+        sum = sum + $1
+        sumsqr = sumsqr + ($1 * $1)
+        count = count + 1
+        if ($1 > max) {
+            max = $i
+        }
+        if ($1 < min) {
+            min = $i
+        }
+    }
+}
+
+END {
+    if (count > 0) {
+        mean = sum/count
+        print sum, count, sum/count, min, max, sqrt((sumsqr/count) - (mean*mean))
+    }
+    else {
+        print sum, count, "Inf"
+    }
+}
