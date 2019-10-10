@@ -114,6 +114,7 @@ alias cp='cp -i'
 alias mv='mv -i'
 
 alias gpu-top='watch -n 0.5 nvidia-smi'
+
 #
 # Default to human readable figures
 # alias df='df -h'
@@ -214,6 +215,10 @@ path-add () {
     else
 	export ${whichpath}=${!whichpath:+${!whichpath}:}${newplace}
     fi
+}
+
+shownice() {
+    column -t -n -s $'\t' | cut -b-$(($(tput cols) - 1))
 }
 
 export -f path-add
