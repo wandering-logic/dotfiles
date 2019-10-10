@@ -24,6 +24,8 @@ export P4CONFIG=.p4config
 # quit-if-one-screen exits less early if there's nothing to scroll
 # RAW-CONTROL-CHARS enables just Ansi color sequences
 export LESS="--no-init --quit-if-one-screen --RAW-CONTROL-CHARS"
+# Grrr.  Python.
+export PYTHONDONTWRITEBYTECODE=1
 # Shell Options
 #
 # See man bash for more options...
