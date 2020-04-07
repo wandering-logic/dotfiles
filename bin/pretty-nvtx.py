@@ -81,7 +81,7 @@ class MarkerTable:
                 while rangeid >= len(self.names):
                     self.names.append(None)
                     self.tids.append(None)
-                self.names[rangeid] = nm
+                self.names[rangeid] = nm[:31]
                 self.tids[rangeid] = threadid
                 
                 self.stack.append(rangeid)
@@ -89,10 +89,10 @@ class MarkerTable:
             elif flags == 4: # a range ends
                 if rangeid in self.stack:
                     self.stack.pop(self.stack.index(rangeid))
+                    if self.tids[rangeid] != threadid:
+                        print("error: popping marker from different thread than pushed????\n")
                 else:
                     print("error: popping non-existing marker????\n")
-                if self.tids[rangeid] != threadid:
-                    print("error: popping marker from different thread than pushed????\n")
                     
             self.next_idx = self.next_idx+1
 
