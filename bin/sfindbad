@@ -1,0 +1,3 @@
+#!/bin/bash
+
+squeue --user=${USER} --noheader --format="%i,%j,%Q,%P,%t,%D,%L,%S" | tr , '\t'
