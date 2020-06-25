@@ -1,1 +1,1 @@
-squeue --format="%6i|%Q|%P|%t|%D|%L|%S|%6i|%20j|%u|%a|%M|%R" --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
+squeue "$@" --format="%6i|%Q|%P|%t|%D|%L|%S|%6i|%20j|%u|%a|%M|%R" --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
