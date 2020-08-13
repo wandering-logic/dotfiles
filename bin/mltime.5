@@ -67,6 +67,12 @@ BEGINFILE {
     run_start_time=$4
 }
 
+/:::MLP.*train_epoch: 0/ {
+    if (run_start_time < 0) {
+        run_start_time=$4
+    }
+}
+
 /:::MLP.*train_loop/ {
     init_time=$4-run_start_time
 }
