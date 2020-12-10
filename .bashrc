@@ -213,9 +213,9 @@ path-add () {
 	# parameter (<word> here is ":${!whichpath}") the ${!param} is an
 	# indirect variabl.  So if whichpath=PATH then we get the contents of
 	# PATH, if it is LD_LIBRARY_PATH we get the contents of that.
-	export ${whichpath}=${newplace}${!whichpath:+:${!whichpath}}
+	export ${whichpath}="${newplace}${!whichpath:+:${!whichpath}}"
     else
-	export ${whichpath}=${!whichpath:+${!whichpath}:}${newplace}
+	export ${whichpath}="${!whichpath:+${!whichpath}:}${newplace}"
     fi
 }
 

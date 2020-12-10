@@ -3,8 +3,10 @@
 
 # source the users bashrc if it exists
 if [ -f "${HOME}/.bashrc" ] ; then
-  source "${HOME}/.bashrc"
+    source "${HOME}/.bashrc"
 fi
+
+echo "path in bashrc is [[${PATH}]]"
 
 # Set PATH so it includes user's private bin if it exists
 # path-add defined in .bashrc
@@ -16,6 +18,7 @@ if [ -d /home/utils/bin ] ; then
     path-add /home/utils/bin
 fi
 
+eval $(ssh-agent) && ssh-add
 # Set MANPATH so it includes users' private man if it exists
 # if [ -d "${HOME}/man" ]; then
 #   MANPATH="${HOME}/man:${MANPATH}"
