@@ -18,7 +18,11 @@ if [ -d /home/utils/bin ] ; then
     path-add /home/utils/bin
 fi
 
-eval $(ssh-agent) && ssh-add
+# the following is wrong except _maybe_ on Selene, where it is also wrong
+# Selene may need the ssh-add but starting another agent is definitely wrong.
+# We should be doing the add on an existing agent
+# eval $(ssh-agent) && ssh-add
+
 # Set MANPATH so it includes users' private man if it exists
 # if [ -d "${HOME}/man" ]; then
 #   MANPATH="${HOME}/man:${MANPATH}"
