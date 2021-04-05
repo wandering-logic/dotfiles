@@ -24,6 +24,8 @@ export P4CONFIG=.p4config
 # quit-if-one-screen exits less early if there's nothing to scroll
 # RAW-CONTROL-CHARS enables just Ansi color sequences
 export LESS="--no-init --quit-if-one-screen --RAW-CONTROL-CHARS"
+# Grrr.  Python.
+export PYTHONDONTWRITEBYTECODE=1
 # Shell Options
 #
 # See man bash for more options...
@@ -114,6 +116,7 @@ alias cp='cp -i'
 alias mv='mv -i'
 
 alias gpu-top='watch -n 0.5 nvidia-smi'
+
 #
 # Default to human readable figures
 # alias df='df -h'
@@ -210,10 +213,14 @@ path-add () {
 	# parameter (<word> here is ":${!whichpath}") the ${!param} is an
 	# indirect variabl.  So if whichpath=PATH then we get the contents of
 	# PATH, if it is LD_LIBRARY_PATH we get the contents of that.
-	export ${whichpath}=${newplace}${!whichpath:+:${!whichpath}}
+	export ${whichpath}="${newplace}${!whichpath:+:${!whichpath}}"
     else
-	export ${whichpath}=${!whichpath:+${!whichpath}:}${newplace}
+	export ${whichpath}="${!whichpath:+${!whichpath}:}${newplace}"
     fi
+}
+
+shownice() {
+    column -t -n -s $'\t' | cut -b-$(($(tput cols) - 1))
 }
 
 export -f path-add

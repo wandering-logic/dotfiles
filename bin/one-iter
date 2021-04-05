@@ -2,8 +2,9 @@
 BEGIN {
     OFS="\t"
     itercount = 0
+    fwd_exists = 0
     iter_to_print = 5
-    print "ARGC is", ARGC
+    start_time = 0
     if (ARGC > 1) {
         iter_to_print = ARGV[1]
         ARGC = ARGC - 1
@@ -11,11 +12,22 @@ BEGIN {
 }
 
 /first_layer_fwd_kernel/ {
+    fwd_exists = 1
     itercount = itercount + 1
+    start_time = $5
+}
+
+/first_layer_wgrad_kernel/ {
+    if (!fwd_exists) {
+        if (itercount == 1) {
+            print("WARNING: couldn't find `first_layer_fwd` using wgrad instead!")
+        }
+        itercount = itercount + 1
+    }
 }
 
 {
     if (itercount == iter_to_print) {
-        print
+        print $1, $2, $3, $4, $5-start_time, $6, $7-start_time, $8, $9, $10, $11
     }
 }

@@ -33,7 +33,7 @@ class MarkerTable:
                              '''
                              select
                                  marker.timestamp,
-                                 marker.flags,    
+                                 marker.flags,
                                  marker.id,
                                  StringTable.value,
                                  marker.objectId
@@ -81,23 +81,35 @@ class MarkerTable:
                 while rangeid >= len(self.names):
                     self.names.append(None)
                     self.tids.append(None)
-                self.names[rangeid] = nm
+                self.names[rangeid] = nm[:31]
                 self.tids[rangeid] = threadid
-                
+
                 self.stack.append(rangeid)
 
             elif flags == 4: # a range ends
                 if rangeid in self.stack:
                     self.stack.pop(self.stack.index(rangeid))
+                    if self.tids[rangeid] != threadid:
+                        print("error: popping marker from different thread than pushed????\n")
                 else:
                     print("error: popping non-existing marker????\n")
-                if self.tids[rangeid] != threadid:
-                    print("error: popping marker from different thread than pushed????\n")
-                    
+
             self.next_idx = self.next_idx+1
 
         return self.cvt_stack_to_string(tid_printing)
 
+def print_grids(gridX, gridY, gridZ, blockX, blockY, blockZ):
+    print("({},{},{})\t({},{},{})".format(gridX, gridY, gridZ,
+                                          blockX, blockY, blockZ),
+          end='\t')
+
+def print_place_ids(streamId, threadId):
+    print("{}\t{}".format(streamId, hex(threadId)),
+          end='\t')
+
+def print_times(apiStart, apiLatency, gpuStart, gpuLatency):
+    print("{}\t{}\t{}\t{}".format(apiStart, apiLatency, gpuStart, gpuLatency),
+          end='\t')
 
 ###############################################################################
 #
@@ -105,16 +117,12 @@ class MarkerTable:
 #
 ###############################################################################
 class KernelTable:
-    def __init__(self, sqlite_filename):
+    def __init__(self, sqlite_filename, markers, start_time, end_time, args):
         self.filename = sqlite_filename
-        try:
-            self.markers = MarkerTable(self.filename)
-            self.start_time = self.markers.first_time
-            self.end_time = self.markers.last_time
-        except:
-            self.markers = None
-            self.start_time = 0
-            self.end_time = 9223372036854775806
+        self.markers = markers
+        self.start_time = start_time
+        self.end_time = end_time
+        self.args = args
         # We join the concurrent_kernel table with the runtime api call table
         # on correlationId.  We only select records between the start and end
         # of the NVTX __start_profile and __stop_profile
@@ -161,19 +169,24 @@ class KernelTable:
             execution_time = (kernel_call['kernelEnd'] -
                               kernel_call['kernelStart'])
             thread_id = kernel_call['threadId']
-            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( kernel_call['gridX'],
-                                                               kernel_call['gridY'],
-                                                               kernel_call['gridZ'],
-                                                               kernel_call['blockX'],
-                                                               kernel_call['blockY'],
-                                                               kernel_call['blockZ'],
-                                                               hex(thread_id),
-                                                               rel_start_time,
-                                                               execution_time),
-                  end='\t')
+            print_grids(kernel_call['gridX'],
+                        kernel_call['gridY'],
+                        kernel_call['gridZ'],
+                        kernel_call['blockX'],
+                        kernel_call['blockY'],
+                        kernel_call['blockZ'])
+            print_place_ids(kernel_call['streamId'], thread_id)
+            print_times(call_time-self.start_time,
+                        kernel_call['apiEnd']-call_time,
+                        rel_start_time,
+                        execution_time)
             # print the markers from just before the kernel's api timestamp
-            if self.markers is not None:
-                print(self.markers.update_time(call_time, thread_id), end='\t')
+            if self.args.also_markers:
+                if self.markers is not None:
+                    print(self.markers.update_time(call_time, thread_id), end='\t')
+                else:
+                    print('', end='\t')
+
             print(kernel_call['kernelName'])
 
 
@@ -188,8 +201,8 @@ class MemcpyTable:
                     'ARRAY', 'MANAGED', 'DEVICE_STATIC', 'MANAGED_STATIC']
     copy_kinds = ['UNKNOWN', 'HTOD', 'DTOH', 'HTOA', 'ATOH', 'ATOA', 'ATOD',
                   'DTOA', 'DTOD', 'HTOH', 'PTOP']
-                                                                                                          
-    def __init__(self, sqlite_filename, start_time, end_time):
+
+    def __init__(self, sqlite_filename, start_time, end_time, args):
         self.start_time = start_time
         self.end_time = end_time
         # We join the memcpy table with the runtime api call table
@@ -207,6 +220,7 @@ class MemcpyTable:
                         memcpy.start as cpyStart,
                         memcpy.end as cpyEnd,
                         memcpy.correlationId,
+                        memcpy.streamId,
                         api_calls.start as apiStart,
                         api_calls.end as apiEnd,
                         api_calls.processId,
@@ -228,20 +242,19 @@ class MemcpyTable:
             rel_start_time = (memcpy['cpyStart']-self.start_time)
             execution_time = (memcpy['cpyEnd'] -
                               memcpy['cpyStart'])
-            thread_id = memcpy['threadId']
-            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( MemcpyTable.copy_kinds[memcpy['copyKind']],
-                                                               MemcpyTable.memory_kinds[memcpy['srcKind']],
-                                                               MemcpyTable.memory_kinds[memcpy['dstKind']],
-                                                               memcpy['flags'],
-                                                               '',
-                                                               '',
-                                                               hex(thread_id),
-                                                               rel_start_time,
-                                                               execution_time),
-                  end='\t')
-            # print the markers from just before the kernel's api timestamp
-            print(memcpy['bytes'], end='\t')
-            print('memcpy')
+            print_grids(MemcpyTable.copy_kinds[memcpy['copyKind']],
+                        MemcpyTable.memory_kinds[memcpy['srcKind']],
+                        MemcpyTable.memory_kinds[memcpy['dstKind']],
+                        memcpy['flags'],
+                        '', '')
+            print_place_ids(memcpy['streamId'], memcpy['threadId'])
+            print_times(call_time-self.start_time,
+                        memcpy['apiEnd']-call_time,
+                        rel_start_time,
+                        execution_time)
+
+            # no marker, but memcpy bytes
+            print('\tmemcpy - {}'.format(memcpy['bytes']))
 
 ###############################################################################
 #
@@ -254,8 +267,8 @@ class MemsetTable:
                     'ARRAY', 'MANAGED', 'DEVICE_STATIC', 'MANAGED_STATIC']
     copy_kinds = ['UNKNOWN', 'HTOD', 'DTOH', 'HTOA', 'ATOH', 'ATOA', 'ATOD',
                   'DTOA', 'DTOD', 'HTOH', 'PTOP']
-                                                                                                          
-    def __init__(self, sqlite_filename, start_time, end_time):
+
+    def __init__(self, sqlite_filename, start_time, end_time, args):
         self.start_time = start_time
         self.end_time = end_time
         # We join the memset table with the runtime api call table
@@ -272,6 +285,7 @@ class MemsetTable:
                         memset.start as dvcStart,
                         memset.end as dvcEnd,
                         memset.correlationId,
+                        memset.streamId,
                         api_calls.start as apiStart,
                         api_calls.end as apiEnd,
                         api_calls.processId,
@@ -293,20 +307,19 @@ class MemsetTable:
             rel_start_time = (memset['dvcStart']-self.start_time)
             execution_time = (memset['dvcEnd'] -
                               memset['dvcStart'])
-            thread_id = memset['threadId']
-            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( '',
-                                                               memset['value'],
-                                                               MemsetTable.memory_kinds[memset['dstKind']],
-                                                               memset['flags'],
-                                                               '',
-                                                               '',
-                                                               hex(thread_id),
-                                                               rel_start_time,
-                                                               execution_time),
-                  end='\t')
-            # print the markers from just before the kernel's api timestamp
-            print(memset['bytes'], end='\t')
-            print('memset')
+            print_grids('',
+                        memset['value'],
+                        MemsetTable.memory_kinds[memset['dstKind']],
+                        memset['flags'],
+                        '', '')
+            print_place_ids(memset['streamId'], memset['threadId'])
+            print_times(call_time-self.start_time,
+                        memset['apiEnd']-call_time,
+                        rel_start_time,
+                        execution_time)
+            # no marker, but memset bytes
+            print('\tmemset - {}'.format(memset['bytes']))
+
 
 ###############################################################################
 #
@@ -314,12 +327,11 @@ class MemsetTable:
 #
 ###############################################################################
 class SyncTable:
-                                                                                                          
     # enums from cupti_activity.h
     sync_kinds = ['UNKNOWN', 'EVENT_SYNC', 'STREAM_WAIT_EVENT',
                   'STREAM_SYNC', 'CONTEXT_SYNC']
 
-    def __init__(self, sqlite_filename, start_time, end_time):
+    def __init__(self, sqlite_filename, start_time, end_time, args):
         self.start_time = start_time
         self.end_time = end_time
         # We join the sync table with the runtime api call table
@@ -333,6 +345,7 @@ class SyncTable:
                         sync.start as dvcStart,
                         sync.end as dvcEnd,
                         sync.correlationId,
+                        sync.streamId,
                         api_calls.start as apiStart,
                         api_calls.end as apiEnd,
                         api_calls.processId,
@@ -354,33 +367,39 @@ class SyncTable:
             rel_start_time = (sync['dvcStart']-self.start_time)
             execution_time = (sync['dvcEnd'] -
                               sync['dvcStart'])
-            thread_id = sync['threadId']
-            print("({},{},{})\t({},{},{})\t{}\t{}\t{}".format( '',
-                                                               '',
-                                                               SyncTable.sync_kinds[sync['type']],
-                                                               '',
-                                                               '',
-                                                               '',
-                                                               hex(thread_id),
-                                                               rel_start_time,
-                                                               execution_time),
-                  end='\t')
-            # print the markers from just before the kernel's api timestamp
-            print(sync['apiEnd']-call_time, end='\t')
-            print('sync')
+            print_grids('', '', SyncTable.sync_kinds[sync['type']],
+                        '', '', '')
+            print_place_ids(sync['streamId'], sync['threadId'])
+            print_times(call_time-self.start_time,
+                        sync['apiEnd']-call_time,
+                        rel_start_time,
+                        execution_time)
+            # no marker
+            print('\tsync')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process the output of nvprof --profile-api-trace all.')
     parser.add_argument('input_file', nargs=1,
                         help='.nvvp file to process')
+    parser.add_argument('--also-markers', action='store_true',
+                        help='print nvtx marker info')
 
     args = parser.parse_args()
 
-    kernels = KernelTable(args.input_file[0])
+    try:
+        markers = MarkerTable(args.input_file[0])
+        start_time = markers.first_time
+        end_time = markers.last_time
+    except:
+        markers = None
+        start_time = 0
+        end_time = 9223372036854775806
+
+    kernels = KernelTable(args.input_file[0], markers, start_time, end_time, args)
     kernels.process_list()
-    memcpys = MemcpyTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    memcpys = MemcpyTable(args.input_file[0], start_time, end_time, args)
     memcpys.process_list()
-    memsets = MemsetTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    memsets = MemsetTable(args.input_file[0], start_time, end_time, args)
     memsets.process_list()
-    syncs = SyncTable(args.input_file[0], kernels.start_time, kernels.end_time)
+    syncs = SyncTable(args.input_file[0], start_time, end_time, args)
     syncs.process_list()
