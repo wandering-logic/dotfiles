@@ -1,10 +1,10 @@
 #!/bin/bash
 
-USAGE_STRING="usage: ${0} [--help] [--var=<VARIABLE>=<VALUE>]* [--ctag=<gitlab-container-tag>] [--config=<config-tag>] [--npar=<npar>] [--nexp=<nexp>] [-- <app-args>*]"
+USAGE_STRING="usage: ${0} [--help] [--runsub=<runsub-file>] [--var=<VARIABLE>=<VALUE>]* [--ctag=<gitlab-container-tag>] [--config=<config-tag>] [--npar=<npar>] [--nexp=<nexp>] [-- <app-args>*]"
 
 getopt --test
 [[ $? -eq 4 ]] || { echo "getopt program on this machine is too old" >&2 ; exit 4; }
-temp_args=$(getopt --name ${0} --options hC:c:n:x:v: --longoptions help,ctag:,config:,npar:,nexp:,var: -- "$@")
+temp_args=$(getopt --name ${0} --options hr:C:c:n:x:v: --longoptions help,runsub:,ctag:,config:,npar:,nexp:,var: -- "$@")
 [[ $? -eq 0 ]] || { echo "${USAGE_STRING}" >&2 ; exit 1; }
 
 eval set -- "${temp_args}"
@@ -14,12 +14,18 @@ SSD_CONFIG_TAG="MUST-SPECIFY-CONFIG"
 export NEXP=1
 NPAR=1
 
+SSD_RUNSUB_FILE=run.sub
+
 while true; do
     case "$1" in
         -h|--help)
             echo "${USAGE_STRING}"
             exit 0
             ;;
+	-r|--runsub)
+	    SSD_RUNSUB_FILE="$2"
+	    shift 2
+	    ;;
         -C|--ctag)
             SSD_CONTAINER_TAG="$2"
             shift 2
@@ -90,14 +96,14 @@ export EXTRA_PARAMS="${EXTRA_PARAMS}${SSD_LAUNCHER_EXTRA_ARGS}"
 SSD_ACCT=$(case ${SSD_LOGIN_HOST} in
 	       draco) echo ent_mlperf_bmark_ssd; ;;
 	       circe) echo mlperft-ssd; ;;
-	       selene) echo mlperft-ssd; ;;
+	       selene) echo mlperf; ;;
 	       *) echo UNKNOWN!; ;;
 	   esac)
 
 SSD_CLUSTER_ADD_ARGS=$(case ${SSD_LOGIN_HOST} in
 			   draco) echo "--gpus-per-node=${DGXNGPU} --exclusive"; ;;
 			   circe) echo ""; ;;
-			   selene) echo "--partition=mlperf"; ;;
+			   selene) echo "--partition=luna"; ;;
 			   *) echo UNKNOWN!; ;;
 		       esac)
 
@@ -119,5 +125,5 @@ echo args are ${SSD_SBATCH_ARGS}
 ################################################################################
 
 for parjob in $(seq ${NPAR}); do
-    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=ssd-${SSD_CONFIG_TAG}-${parjob} run.sub
+    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=mlperf:::ssd:${SSD_CONFIG_TAG}-${parjob} ${SSD_RUNSUB_FILE}
 done
