@@ -125,5 +125,5 @@ echo args are ${SSD_SBATCH_ARGS}
 ################################################################################
 
 for parjob in $(seq ${NPAR}); do
-    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=mlperf:::ssd:${SSD_CONFIG_TAG}-${parjob} ${SSD_RUNSUB_FILE}
+    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=mlperf-ssd:::${SSD_CONFIG_TAG}-${parjob} ${SSD_RUNSUB_FILE}
 done
