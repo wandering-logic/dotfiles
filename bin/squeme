@@ -1,1 +1,22 @@
-squeue "$@" --format="%6i|%Q|%P|%t|%D|%L|%S|%6i|%20j|%u|%a|%M|%R" --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
+#!/usr/bin/sh
+
+squeue "$@" --format="%i|%Q|%13P|%t|%D|%L|%S|%i|%80j|%u|%a|%M|%R" --priority --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
+
+# --priority sorts in priority _tier_ order, then by priority.  For --sort the
+# letters are the same ones used for output formatting, "-" is "descending"
+# T is job state (Run, Pending, Completing)
+# p is relative job priority
+# S is start time
+# for the output format:
+# i is jobid
+# Q is the (integer) job priority (larger number is larger priority)
+# P is partition
+# t is jobs state (in compact (2-letter) form)
+# D is
+# L is time remaining
+# S is actual or expected start time
+# j is job name (very long string with lots of useful info)
+# u is user
+# a is account
+# M is time used
+# R is "reason"
