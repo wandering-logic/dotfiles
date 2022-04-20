@@ -67,11 +67,11 @@ SSD_LAUNCHER_EXTRA_ARGS="${SSD_LAUNCHER_EXTRA_ARGS:+ ${SSD_LAUNCHER_EXTRA_ARGS}}
 ####### Given login host, figure out platform, and thus config file name #######
 ################################################################################
 
-SSD_LOGIN_HOST=$(hostname | sed -E 's/-.*$//')
+SSD_LOGIN_HOST=$(hostname | sed -E 's/-login.*$//')
 
 DGXSYSTEM=$(case ${SSD_LOGIN_HOST} in
+		circe|draco-rno) echo DGX2; ;;
 		draco|prom) echo DGX1; ;;
-		circe) echo DGX2; ;;
 		selene) echo DGXA100; ;;
 		*) echo UNKNOWN!; ;;
 	    esac)
@@ -94,13 +94,14 @@ export EXTRA_PARAMS="${EXTRA_PARAMS}${SSD_LAUNCHER_EXTRA_ARGS}"
 ################################################################################
 
 SSD_ACCT=$(case ${SSD_LOGIN_HOST} in
-	       draco) echo ent_mlperf_bmark_ssd; ;;
+	       draco|draco-rno) echo ent_mlperf_bmark_ssd; ;;
 	       circe) echo mlperft-ssd; ;;
 	       selene) echo mlperf; ;;
 	       *) echo UNKNOWN!; ;;
 	   esac)
 
 SSD_CLUSTER_ADD_ARGS=$(case ${SSD_LOGIN_HOST} in
+			   draco-rno) echo "--gpus-per-node=${DGXNGPU} --exclusive --reservation=early_testing"; ;;
 			   draco) echo "--gpus-per-node=${DGXNGPU} --exclusive"; ;;
 			   circe) echo ""; ;;
 			   selene) echo "--partition=luna"; ;;
@@ -125,5 +126,5 @@ echo args are ${SSD_SBATCH_ARGS}
 ################################################################################
 
 for parjob in $(seq ${NPAR}); do
-    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=mlperf:::ssd:${SSD_CONFIG_TAG}-${parjob} ${SSD_RUNSUB_FILE}
+    CONT=gitlab-master.nvidia.com/mfrank/mlperf-containers:${SSD_CONTAINER_TAG} sbatch ${SSD_SBATCH_ARGS} --job-name=mlperf-ssd:::${SSD_CONFIG_TAG}-${parjob} ${SSD_RUNSUB_FILE}
 done
