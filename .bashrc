@@ -154,7 +154,8 @@ alias emacs='/usr/bin/emacs -nw'
 # umask is permission bits that should be forbidden
 # so 027 is "group can't write, others can't read/write/execute"
 # 022 is "neither group nor others can write"
-umask 022
+# 002 is "others cannot write"
+umask 002
 
 # Functions
 #

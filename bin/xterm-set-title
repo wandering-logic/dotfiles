@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# this file needs to be sourced, rather than executed because its purpose is to
+# change a variable
+
+# turn of the dynamic prompt
+PROMPT_COMMAND="history -a"
+# now change the prompt to its new static value
+echo -ne "\033]0;$1\007"

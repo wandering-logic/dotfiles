@@ -1,6 +1,7 @@
 #!/usr/bin/sh
 
-squeue "$@" --format="%i|%Q|%13P|%t|%D|%L|%S|%i|%80j|%u|%a|%M|%R" --priority --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
+squeue "$@" --format="%i|%Q|%10P|%t|%D|%L|%S|%i|%40j|%u|%a|%M|%R" --priority --sort=-T,-p,S | grep -v '(Dependency)$' | tr -s ' ' '_' | tr '|' '\t'
+#squeue "$@" --format="%i|%Q|%13P|%t|%D|%L|%S|%i|%80j|%u|%a|%M|%R" --priority --sort=-T,-p,S | tr -s ' ' '_' | tr '|' '\t'
 
 # --priority sorts in priority _tier_ order, then by priority.  For --sort the
 # letters are the same ones used for output formatting, "-" is "descending"
